@@ -1,0 +1,11 @@
+{application, ebus, [
+    {description, "Erlang internal pubsub server"},
+    {vsn, "1"},
+    {registered, [ebus]},
+    {applications, [
+        kernel,
+        stdlib
+    ]},
+    {mod, {ebus_app, []}},
+    {env, []}
+]}.

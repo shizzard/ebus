@@ -1,0 +1,3 @@
+*.sublime-*
+erl_crash.dump
+ebin/*
