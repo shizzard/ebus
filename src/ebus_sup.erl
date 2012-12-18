@@ -1,5 +1,7 @@
 -module(ebus_sup).
 
+-include("log.hrl").
+
 -behaviour(supervisor).
 
 -export([start_link/0]).
@@ -10,4 +12,8 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
+    {ok, {
+        {simple_one_for_one, 5, 10}, [
+            {ebus_channel, {ebus_channel, start_link, []}, transient, brutal_kill, worker, [ebus_channel]}
+        ]
+    }}.

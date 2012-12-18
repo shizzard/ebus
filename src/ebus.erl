@@ -2,37 +2,62 @@
 
 -export([start/1, stop/1, publish/2, subscribe/1, unsubscribe/1]).
 
--spec start(Channel::binary()) -> 
-    ok | {error, duplicate}.
-start(Channel) when is_binary(Channel) ->
-    ok;
-start(_Channel) ->
-    throw(badarg).  
+-export([start_dev/0]).
 
--spec stop(Channel::binary()) -> 
-    ok | {error, not_found}.
+-spec start(Channel::binary()) ->
+    {ok, Channel::binary} | {error, Reason::any()}.
+start(Channel) when is_binary(Channel) ->
+    case supervisor:start_child(ebus_sup, [Channel]) of 
+        {ok, _Pid} ->
+            {ok, Channel};
+        Error ->
+            {error, Error}
+    end.
+
+-spec stop(Channel::binary()) ->
+    {ok, Channel::binary} | {error, Reason::any()}.
 stop(Channel) when is_binary(Channel) ->
-    ok;
-stop(_Channel) ->
-    throw(badarg).
+    case ebus_channel:pid(Channel) of 
+        {ok, Pid} ->
+            supervisor:terminate_child(ebus_sup, Pid),
+            {ok, Channel};
+        {error, Reason} ->
+            {error, Reason}
+    end.
 
 -spec publish(Channel::binary(), Message::any()) ->
-    ok | {error, not_found}.
+    {ok, Channel::binary} | {error, Reason::any()}.
 publish(Channel, Message) when is_binary(Channel) ->
-    ok;
-publish(_Channel, _Message) ->
-    throw(badarg).
+    case ebus_channel:pid(Channel) of 
+        {ok, Pid} ->
+            ebus_channel:publish(Pid, Message),
+            {ok, Channel};
+        {error, Reason} ->
+            {error, Reason}
+    end.
 
 -spec subscribe(Channel::binary()) ->
-    ok | {error, not_found}.
+    {ok, Channel::binary} | {error, Reason::any()}.
 subscribe(Channel) when is_binary(Channel) ->
-    ok;
-subscribe(_Channel) ->
-    throw(badarg). 
+    case ebus_channel:pid(Channel) of 
+        {ok, Pid} ->
+            ebus_channel:subscribe(Pid),
+            {ok, Channel};
+        {error, Reason} ->
+            {error, Reason}
+    end.
 
 -spec unsubscribe(Channel::binary()) ->
-    ok | {error, not_found} | {error, not_subscribed}.
+    {ok, Channel::binary} | {error, Reason::any()}.
 unsubscribe(Channel) when is_binary(Channel) ->
-    ok;
-unsubscribe(_Channel) ->
-    throw(badarg).
+    case ebus_channel:pid(Channel) of 
+        {ok, Pid} ->
+            ebus_channel:unsubscribe(Pid),
+            {ok, Channel};
+        {error, Reason} ->
+            {error, Reason}
+    end.
+
+start_dev() ->
+    application:start(gproc),
+    application:start(ebus).

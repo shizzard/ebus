@@ -1,6 +1,6 @@
 {application, ebus, [
     {description, "Erlang internal pubsub server"},
-    {vsn, "1"},
+    {vsn, "0.1"},
     {registered, [ebus]},
     {applications, [
         kernel,
