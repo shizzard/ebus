@@ -13,7 +13,8 @@
          terminate/2, code_change/3]).
 
 -record(state, {
-    channel :: binary()
+    channel             :: binary(),
+    subscribers = []    :: [binary()]
 }).
 
 -define(CHANNEL(Channel), {?MODULE, Channel}).
@@ -51,18 +52,23 @@ handle_call(Request, _From, State) ->
     ?ERROR("Strange call: ~p", [Request]),
     {reply, ok, State}.
 
-handle_cast(?PUBLISH(Message), State) ->
-    ?ERROR("Publish: ~p", [Message]),
-    % publish routines
+handle_cast(?PUBLISH(Message), #state{subscribers = Subs} = State) ->
+    [Sub ! Message || Sub <- Subs],
     {noreply, State};
-handle_cast(?SUBSCRIBE(Subscriber), State) ->
-    ?ERROR("Subscribe: ~p", [Subscriber]),
-    % subscribe routines
-    {noreply, State};
-handle_cast(?UNSUBSCRIBE(Subscriber), State) ->
-    ?ERROR("Unsubscribe: ~p", [Subscriber]),
-    % unsubscribe routines
-    {noreply, State};
+handle_cast(?SUBSCRIBE(Sub), #state{subscribers = Subs} = State) ->
+    case is_subscriber(Sub, Subs) of 
+        true ->
+            {noreply, State};
+        false ->
+            {noreply, State#state{subscribers = [Sub | Subs]}}
+    end;
+handle_cast(?UNSUBSCRIBE(Sub), #state{subscribers = Subs} = State) ->
+    case is_subscriber(Sub, Subs) of 
+        false ->
+            {noreply, State};
+        true ->
+            {noreply, State#state{subscribers = lists:delete(Sub, Subs)}}
+    end;
 handle_cast(Msg, State) ->
     ?ERROR("Strange cast: ~p", [Msg]),
     {noreply, State}.
@@ -77,3 +83,7 @@ terminate(_Reason, State) ->
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+
+is_subscriber(Pid, Subscribers) ->
+    lists:member(Pid, Subscribers). 
