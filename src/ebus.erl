@@ -61,3 +61,18 @@ unsubscribe(Channel) when is_binary(Channel) ->
 start_dev() ->
     application:start(gproc),
     application:start(ebus).
+
+% run_test() ->
+%     io:format("== Test start ================================================"),
+%     ebus:start(<<"channel">>),
+%     [spawn(fun() -> test_worker(N) end) || N <- lists:seq(1, 1000)],
+%     timer:sleep(100),
+%     ebus:publish(<<"channel">>, {message, test}),
+%     io:format("== Test stop =================================================").
+
+% test_worker(N) ->
+%     ebus:subscribe(<<"channel">>),
+%     receive 
+%         Msg ->
+%             io:format("#~4B got a message: ~p~n", [N, Msg])
+%     end.
